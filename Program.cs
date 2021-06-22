@@ -21,6 +21,20 @@ class Program {
 			terms[i] = args[i];
 		}
 
+		if (args.Length == 0) {
+			Console.WriteLine("Will search from where the .exe is located, recursively through all subfolders, and search");
+			Console.WriteLine("through all .txt, .log, .csv, .cs, .css, .js, .asp, .vb, .vbs, .ts, .html, and .sql files,");
+			Console.WriteLine("looking for your search terms.\n");
+			Console.WriteLine("It is NOT case sensitive.\n");
+			Console.WriteLine("It will show results on the console, but also create a “SearchSource.txt” file in the same");
+			Console.WriteLine("location as the .exe file.\n");
+			Console.WriteLine("USAGE:\n");
+			Console.WriteLine("SearchSource.exe arg1, arg2, ... , arg100\n");
+
+			return;
+		}
+
+
 		try {
 			File.Delete("SearchSource.txt");
 		} catch {
