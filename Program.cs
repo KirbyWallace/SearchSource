@@ -76,6 +76,10 @@ class Program {
 
 				for (int i = 0; i < args.Length; i++) {
 
+					//
+					// I specifically exclude paths that contain any of these 3rd party libs that I really 
+					// do not care about.  Clear or add more to them if you wish.
+					//
 					if ((aLines[j].ToLower().Contains(args[i].ToLower()))
 						&& (file.ToLower().IndexOf("jquery") == -1)
 						&& (file.ToLower().IndexOf("datatables") == -1)
