@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.IO;
+using System.Collections.Generic;
 
 class Program {
 
@@ -17,11 +18,37 @@ class Program {
 		long matches = 0;
 		long numFiles = 0;
 
-		for (int i = 0; i < args.Length; i++) {
-			terms[i] = args[i];
+		if (args.Length == 0) {
+
+			// started by dbl-click in windows explorer.  Prompt for args
+
+			int x = 0;
+			Console.WriteLine("Enter search terms.  Enter blank line to continue.");
+
+			while (true) {
+
+				Console.Write("Search Term: ");
+				string y = Console.ReadLine();
+
+				if (y != "") {
+					terms[x++] = y;
+				} else {
+					break;
+				}
+			}
+
+		} else {
+
+			// pick up off the command line that was used to start the program
+
+			for (int i = 0; i < args.Length; i++) {
+				terms[i] = args[i];
+			}
 		}
 
-		if (args.Length == 0) {
+
+
+		if (args.Length == 0 && terms.FirstNull() == -1) {
 			Console.WriteLine("Will search from where the .exe is located, recursively through all subfolders, and search");
 			Console.WriteLine("through all .txt, .log, .csv, .cs, .css, .js, .asp, .vb, .vbs, .ts, .html, and .sql files,");
 			Console.WriteLine("looking for your search terms.\n");
@@ -33,6 +60,17 @@ class Program {
 
 			return;
 		}
+
+		// clean up the terms array.  Crop all nulls leaving only actual search terms.  Don't want to compare all 100 elements
+		// when 97 of them are null.
+
+		if (terms.FirstNull() > -1) {
+			terms = terms.NonNullElements();
+		} else {
+			// If no search terms entered, nothing to do.
+			System.Environment.Exit(0);
+		}
+
 
 
 		try {
@@ -57,8 +95,8 @@ class Program {
 
 		StreamWriter sw = new StreamWriter("SearchSource.txt", APPEND);
 
-		Console.WriteLine("\nSearch Terms: " + String.Join(", ", args) + "\n");
-		sw.WriteLine("\nSearch Terms: " + String.Join(", ", args) + "\n");
+		Console.WriteLine("\nSearch Terms: " + String.Join(", ", terms) + "\n");
+		sw.WriteLine("\nSearch Terms: " + String.Join(", ", terms) + "\n");
 
 		foreach (string file in files) {
 
@@ -74,13 +112,9 @@ class Program {
 
 			for (int j = 0; j < aLines.Length; j++) {
 
-				for (int i = 0; i < args.Length; i++) {
+				for (int i = 0; i < terms.Length; i++) {
 
-					//
-					// I specifically exclude paths that contain any of these 3rd party libs that I really 
-					// do not care about.  Clear or add more to them if you wish.
-					//
-					if ((aLines[j].ToLower().Contains(args[i].ToLower()))
+					if ((aLines[j].ToLower().Contains(terms[i].ToLower()))
 						&& (file.ToLower().IndexOf("jquery") == -1)
 						&& (file.ToLower().IndexOf("datatables") == -1)
 						&& (file.ToLower().IndexOf("chosen") == -1)
@@ -94,8 +128,11 @@ class Program {
 
 						termCount[i] = termCount[i] + 1;
 
-						sw.WriteLine("File: " + file + " Line: " + j + " Found: " + args[i]);
-						Console.WriteLine("File: " + file + " Line: " + j + " Found: " + args[i]);
+						sw.WriteLine("File: " + file + " Line: " + j + " Found: " + terms[i]);
+						sw.WriteLine(aLines[j].Trim() + "\n");
+
+						Console.WriteLine("File: " + file + " Line: " + j + " Found: " + terms[i]);
+						Console.WriteLine(aLines[j].Trim() + "\n");
 
 					}
 				}
@@ -116,7 +153,7 @@ class Program {
 		Console.WriteLine((time / (double)10000000).ToString() + " seconds.");
 		Console.WriteLine(matches + " Matches Found.\n");
 
-		for (int i = 0; i < args.Length; i++) {
+		for (int i = 0; i < terms.Length; i++) {
 			if (terms[i] != "") {
 				Console.WriteLine(terms[i] + " = " + termCount[i].ToString());
 				sw.WriteLine(terms[i] + " = " + termCount[i].ToString());
@@ -127,6 +164,47 @@ class Program {
 		sw.Close();
 		sw.Dispose();
 
+
+		// if no args were passed, then the program was probably started by dbl-click on file in 
+		// windows explorer, and search terms entered one at a time.  So, keep window open at end
+		// to see results.  Not necessary of args.length > 0 because that means probably started
+		// at a command line with args.
+
+		if (args.Length == 0) {
+			Console.WriteLine("\nPress any key to exit.");
+			Console.ReadKey();
+		}
+
 	}
+
 }
 
+public static class ExtentionMethods {
+
+	public static int FirstNull(this string[] sourceArray) {
+
+		for (int i = 0; i < sourceArray.Length; i++) {
+			if (sourceArray[i] == null) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	public static string[] NonNullElements(this string[] sourceArray) {
+
+		List<string> x = new List<string>();
+
+		for (int i = 0; i < sourceArray.Length; i++) {
+			if (sourceArray[i] != null) {
+				x.Add(sourceArray[i]);
+			} else {
+				break;
+			}
+		}
+
+		return x.ToArray();
+	}
+
+}
